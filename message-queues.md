@@ -1,6 +1,12 @@
 In a system design context, implementing a message queue with a producer-consumer model is a common pattern to achieve scalability, decoupling, and asynchronous processing. Let's break down the components and considerations involved in such a design:
 
-- <a href="https://youtu.be/J6CBdSCB_fY?list=PLTCrU9sGyburBw9wNOHebv9SjlE4Elv5a"> This video can explain it better </a>
+##### useful links
+1)  <a href="https://youtu.be/J6CBdSCB_fY?list=PLTCrU9sGyburBw9wNOHebv9SjlE4Elv5a"> This video can explain it better </a>
+2) [Comparing Publish-Subscribe Messaging and Message Queuing](https://dzone.com/articles/comparing-publish-subscribe-messaging-and-message)
+3) [What is Message Queuing?](https://www.cloudamqp.com/blog/what-is-message-queuing.html)
+4) [Message Queues](https://aws.amazon.com/message-queue/#:~:text=A%20message%20queue%20is%20a,once%2C%20by%20a%20single%20consumer)
+
+
 
 1. Message Queue:
 A message queue is a form of asynchronous service-to-service communication used in distributed systems. It enables decoupling of components by allowing them to communicate without needing to know about each other. Common message queue systems include RabbitMQ, Apache Kafka, Amazon SQS, and Redis.
