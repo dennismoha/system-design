@@ -529,7 +529,8 @@ APIs play a critical role in modern system design by enabling communication betw
 - <a href="Quickly learn the basics of what REST is and the core concepts behind it.">Quickly learn the basics of what REST is and the core concepts behind it.</a>
 - <a href="https://github.com/RestCheatSheet/api-cheat-sheet#api-design-cheat-sheet"> REST API cheat sheet </a>
 
-- [download pdf](./Assets/APIs/RESTful%20Best%20Practices-v1_2.pdf)
+- [rest pdf](./Assets/APIs/RESTful%20Best%20Practices-v1_2.pdf)
+- [REST API Tutorial](https://restfulapi.net/)
 
 
  Here’s a comprehensive guide to understanding and designing APIs within a system.
