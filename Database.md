@@ -263,6 +263,7 @@ https://hazelcast.com/glossary/sharding/
 3. **Directory-Based Sharding**: A lookup table (directory) is used to map each key to a specific shard. This provides flexibility but adds overhead due to the lookup process.
 
 ![sharding-strategies](./Assets/databases/sharding%20types.gif)
+https://linkedin.com/posts/rilwanrr_top-4-data-sharding-algorithms-explained-activity-7191104953967337473-S6z0
 
 ### Implementation Steps
 
@@ -526,4 +527,52 @@ Orders created in each month are then stored in the corresponding shard based on
 Range-based sharding offers a logical and intuitive way to partition data in a database system. By carefully selecting shard keys and defining ranges, you can achieve balanced data distribution and optimize query performance. However, it's essential to consider the potential challenges and complexities, particularly around range overlaps and data distribution skewness, when implementing range-based sharding.
 
 
-3) Directory based sharding
+3) ### Directory based sharding
+
+
+ Directory sharding often employs a lookup table to efficiently map shard keys to the corresponding directories or shards where the data is stored. Here's how it typically works:
+
+ ![directory-based-sharding](./Assets/databases/directory-based-sharding.png)
+ https://levelup.gitconnected.com/4-advanced-sharding-techniques-every-software-engineer-must-know-b4493dc6ec0f?gi=7b8514c89b99
+
+1. **Lookup Table Creation**: When data is initially distributed across the shards, a lookup table is created. This table maps shard keys (e.g., primary keys or hashed values) to the corresponding directories or shards where the data resides.
+
+2. **Lookup Table Structure**: The lookup table can be implemented as a data structure like a hash table, a distributed key-value store, or even a simple database table. It contains entries that associate each shard key with the identifier of the directory or shard where the data is located.
+
+3. **Request Processing**: When a request comes in to access or modify data, the system first consults the lookup table to determine which shard contains the relevant data. It looks up the shard key provided in the request and retrieves the corresponding directory or shard identifier from the lookup table.
+
+4. **Accessing Data**: Once the directory or shard containing the data is identified, the system can directly access the data stored in that location. This may involve querying a database, accessing files, or communicating with the appropriate server or node in a distributed environment.
+
+5. **Lookup Table Maintenance**: As data is added, modified, or removed from the system, the lookup table may need to be updated accordingly. This ensures that the mapping between shard keys and directories remains accurate and up to date.
+
+By using a lookup table, directory sharding can efficiently route requests to the appropriate shards, avoiding the need to search through all directories for the relevant data. This approach helps improve performance and scalability, particularly in large-scale distributed database systems. Additionally, lookup tables can be optimized for fast key lookups, further enhancing system efficiency.
+
+#### merits and dimerits of directory sharding
+
+Directory-based sharding offers several advantages and disadvantages, which are important to consider when designing and implementing a distributed database system. Here's a breakdown of the merits and demerits:
+
+**Merits:**
+
+1. **Scalability**: Directory-based sharding enables horizontal scalability by distributing data across multiple directories or shards. As the dataset grows, new directories can be added to accommodate the increased load, allowing the system to scale gracefully.
+
+2. **Performance**: Sharding data into multiple directories can improve query performance by reducing the amount of data that needs to be searched or processed. Queries can be directed to specific shards, minimizing latency and improving response times.
+
+3. **Load Balancing**: By evenly distributing data across shards, directory-based sharding helps balance the workload across multiple servers or nodes. This prevents hotspots and ensures that resources are utilized efficiently, leading to better overall system performance.
+
+4. **Fault Tolerance**: Distributing data across multiple shards provides fault tolerance and high availability. In the event of a hardware failure or network issue affecting one shard, the remaining shards can continue to operate, reducing the risk of data loss or service disruption.
+
+5. **Isolation**: Each shard operates independently, which can provide isolation between different subsets of data. This can be advantageous for security, compliance, and data governance purposes, as well as for managing multi-tenant environments.
+
+**Demerits:**
+
+1. **Complexity**: Implementing and managing directory-based sharding can be complex, especially as the system scales. It requires careful planning, configuration, and ongoing maintenance to ensure that data is distributed effectively and evenly across shards.
+
+2. **Data Integrity**: Sharding can introduce challenges related to maintaining data integrity, consistency, and referential integrity across multiple shards. Coordinating transactions and ensuring atomicity and isolation can be more complicated in a sharded environment.
+
+3. **Query Joins**: Performing queries that require joining data from multiple shards can be challenging and may require additional coordination and processing. This can impact query performance and increase complexity, especially for distributed joins.
+
+4. **Single Point of Failure**: While sharding improves fault tolerance, it also introduces the risk of a single point of failure if the directory or lookup table becomes unavailable. Ensuring the availability and reliability of the lookup table is crucial for the overall stability of the system.
+
+5. **Data Migration**: Adding or removing shards, rebalancing data, or changing sharding strategies can involve complex data migration processes. Moving data between shards while maintaining availability and consistency can be time-consuming and resource-intensive.
+
+In summary, directory-based sharding offers scalability, performance, and fault tolerance benefits but comes with challenges related to complexity, data integrity, and query processing. Careful planning, monitoring, and management are essential to maximize the advantages of sharding while mitigating its drawbacks.
