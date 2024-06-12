@@ -226,5 +226,304 @@ Database replication and database snapshots are both techniques used in database
 
 
 
+# Database Sharding
+
+Database sharding is a technique used to partition a large database into smaller, more manageable pieces, called shards. Each shard is a separate database that contains a subset of the data. This approach can improve performance, scalability, and availability of the database system. Here’s a detailed overview:
+
+![database-sharding](./Assets/databases/data-sharding.png)
+https://www.redhat.com/architect/pros-and-cons-sharding
+
+### Key Concepts
+
+1. **Shard**: An individual partition or segment of the database. Each shard holds its own data and operates independently.
+2. **Shard Key**: A specific key or set of keys used to determine how data is distributed across shards.
+3. **Horizontal Partitioning**: Data is divided across multiple databases (shards), each storing a subset of the rows.
+4. **Vertical Partitioning**: Data is divided by columns, with different shards containing different columns of the same table. This is less common and usually used in conjunction with horizontal partitioning.
+
+![horizontal-vs-vertical-sharding](./Assets/databases/horizontal-vs-vertical0sharding.webp)
+https://hazelcast.com/glossary/sharding/
+### Benefits of Sharding
+
+1. **Scalability**: Sharding allows a database to handle more data and more requests by distributing the load across multiple servers.
+2. **Performance**: By distributing the data, sharding can reduce the load on any single database server, thus improving query performance.
+3. **Availability and Fault Tolerance**: If one shard goes down, others can continue to function, improving the overall availability of the system.
+4. **Cost Efficiency**: Instead of scaling up a single server, sharding allows the use of multiple lower-cost servers.
+
+### Challenges of Sharding
+
+1. **Complexity**: Sharding adds complexity to the database architecture, requiring careful planning and management.
+2. **Data Distribution**: Ensuring an even distribution of data across shards can be challenging. Uneven distribution can lead to hotspots where some shards handle more load than others.
+3. **Cross-Shard Joins and Transactions**: Queries that require data from multiple shards can be complex and less efficient.
+4. **Rebalancing**: Adding or removing shards involves rebalancing data, which can be complex and time-consuming.
+
+### Sharding Strategies
+
+1. **Range-Based Sharding**: Data is divided based on ranges of the shard key. For example, users with IDs 1-1000 go to one shard, and users with IDs 1001-2000 go to another.
+2. **Hash-Based Sharding**: A hash function is applied to the shard key to determine the shard. This usually provides a more even distribution of data.
+3. **Directory-Based Sharding**: A lookup table (directory) is used to map each key to a specific shard. This provides flexibility but adds overhead due to the lookup process.
+
+![sharding-strategies](./Assets/databases/sharding%20types.gif)
+
+### Implementation Steps
+
+1. **Define Shard Key**: Choose an appropriate shard key that ensures an even distribution of data.
+2. **Set Up Shards**: Create multiple databases or servers to act as shards.
+3. **Data Distribution**: Implement logic to distribute data across shards based on the shard key.
+4. **Routing Layer**: Develop or use an existing routing layer to direct queries to the appropriate shard.
+5. **Data Management**: Implement mechanisms for data migration, backup, and rebalancing.
+
+### Tools and Technologies
+
+Several database management systems and tools support sharding, either natively or through extensions:
+- **MySQL**: Tools like Vitess provide sharding capabilities.
+- **MongoDB**: Has built-in support for sharding.
+- **Cassandra**: Uses a distributed architecture that inherently supports sharding.
+- **PostgreSQL**: Extensions like Citus enable sharding.
+
+### Conclusion
+
+Database sharding is a powerful technique for scaling databases and improving performance. However, it introduces complexity and requires careful planning and management. By understanding the benefits and challenges, and by choosing the right sharding strategy and tools, organizations can effectively manage large and growing datasets.
+
+<!-- # sharding strategies
+   1) algorithmic sharding
+   2) Dynamic sharding -->
+
+###  Sharding Strategies in details
+
+1) #### Key based sharding
+
+   **Key-based sharding**, also known as `hash-based sharding`, is a technique where the shard in which a piece of data resides is determined by applying a hash function to a key. This method ensures an even distribution of data across shards, reducing the likelihood of hotspots and ensuring predictable query performance.
+
+![key-based-sharding](./Assets/databases/key-based-sharding.png)
+https://www.digitalocean.com/community/tutorials/understanding-database-sharding
+
+#### How It Works
+
+1. **Select a Shard Key**: Choose a key that uniquely identifies each record. Common examples include user IDs, product IDs, or order IDs. **SHARD KEYS ARE NOT PRIMARILY PRIMARY KEYS. PRIMARY KEY CAN ALSO BE A SHARD KEY BUT THATS OPTIONAL **
+2. **Apply a Hash Function**: Use a hash function to generate a hash value from the shard key. **HASH FUNCTION WILL ALWAYS RETURN THE SAME VALUE FOR A KEY. EG, IF PRODUCT_ID=1 IS PASSED TO THE HASH FUNCTION NOW AND RETURNS K, EVEN 100 WEEKS THAT IS STILL THE VALUE RETURNED WHEN 1 IS PASSED TO THE HASH FUNCTION  **
+3. **Determine the Shard**: Map the hash value to one of the shards using a modulo operation or another mapping function.
+
+#### Example
+
+Suppose you have a user database and want to distribute users across 10 shards based on their user ID.
+
+1. **Select Shard Key**: `user_id`
+2. **Hash Function**: A simple modulo operation
+3. **Determine Shard**:
+   ```python
+   def get_shard_id(user_id, num_shards):
+       return hash(user_id) % num_shards
+
+   user_id = 12345
+   num_shards = 10
+   shard_id = get_shard_id(user_id, num_shards)
+   ```
+
+In this example, `get_shard_id(12345, 10)` would determine which shard the user with ID `12345` should be stored in.
+
+### Benefits
+
+- **Even Distribution**: Proper hash functions ensure that data is evenly distributed across all shards, preventing any single shard from becoming a hotspot.
+- **Scalability**: Can easily scale horizontally by adding more shards.
+- **Predictability**: Given a shard key, the location of the data is predictable and deterministic.
+
+### Challenges
+
+- **Rebalancing**: Adding or removing shards can require rehashing and redistributing data, which can be complex and time-consuming.
+- **Hash Collisions**: Although rare with good hash functions, collisions can still occur and must be handled appropriately.
+- **Complex Joins**: Performing joins across shards can be complex and may require additional coordination.
+
+### Best Practices
+
+1. **Choose a Good Hash Function**: Use a robust hash function that minimizes collisions and distributes data evenly.
+2. **Plan for Rebalancing**: Implement strategies to handle data rebalancing when the number of shards changes.
+3. **Monitor Performance**: Continuously monitor the distribution of data and the performance of each shard to detect and mitigate any imbalances or hotspots.
+4. **Consistent Hashing**: Consider using consistent hashing to minimize the amount of data that needs to be moved when the number of shards changes.
+
+### Example Implementation in Python
+
+Here is a simple implementation of key-based sharding using a hash function:
+
+```python
+import hashlib
+
+def hash_key(key):
+    return int(hashlib.sha256(key.encode()).hexdigest(), 16)
+
+def get_shard_id(key, num_shards):
+    return hash_key(key) % num_shards
+
+# Example usage
+num_shards = 10
+user_id = "user12345"
+shard_id = get_shard_id(user_id, num_shards)
+
+print(f"User ID {user_id} is assigned to shard {shard_id}")
+```
+
+In this example, we use SHA-256 for hashing the key, which ensures a more even distribution compared to simpler hash functions. The `get_shard_id` function determines the shard ID by taking the hash value modulo the number of shards.
+
+### How to choose the sharding key
+Choosing an effective sharding key is critical for achieving balanced distribution and efficient access in a sharded database system. Here are detailed guidelines and best practices for selecting a sharding key, including considerations around static keys and composite keys:
+
+### Guidelines for Choosing a Sharding Key
+
+#### 1. Choose a Key that is Static
+
+- **Stability**: The sharding key should not change frequently. Frequent changes to the key would necessitate moving data between shards, leading to significant overhead and potential performance degradation.
+- **Examples**: Good candidates for static keys are identifiers that are unique and remain constant, such as `user_id`, `order_id`, `product_id`, etc.
+
+#### 2. Use a Combination of Columns as the Shard Key
+
+- **Uniqueness**: The combination of columns should form a unique and static identifier to ensure each record can be efficiently located in a specific shard.
+- **Examples**: A combination of `user_id` and `order_id` can be used if the combination is unique and helps distribute the data more evenly.
+
+### Detailed Steps and Considerations
+
+#### Step 1: Analyze Your Data Access Patterns
+
+- **Identify Common Queries**: Understand the most frequent queries and the keys they use. This will help in selecting a key that supports efficient access.
+- **Write Patterns**: Determine how often data is written and ensure the key does not funnel writes to a single shard.
+
+#### Step 2: Evaluate Potential Sharding Keys
+
+- **Cardinality**: Ensure the key or combination of keys has high cardinality (many unique values) to avoid hotspots.
+- **Distribution**: Simulate the data distribution using the potential sharding key to verify that it distributes data evenly across shards.
+- **Query Isolation**: The chosen key should allow most queries to be resolved within a single shard, minimizing the need for cross-shard operations.
+
+#### Step 3: Implement and Test
+
+- **Simulation**: Use sample datasets to test how the data will be distributed across shards.
+- **Monitor Performance**: Continuously monitor the system to identify any imbalances or performance issues, and adjust the sharding strategy if necessary.
+
+### Example: Choosing and Testing a Sharding Key
+
+#### Scenario: E-commerce Platform
+
+Suppose you are designing a sharded database for an e-commerce platform. You have tables for users, orders, and products. Common operations include fetching user profiles, retrieving order histories, and searching for products.
+
+1. **Static Key Example**: `user_id`
+   - **Pros**: User IDs are unique, static, and provide even distribution if assigned properly.
+   - **Cons**: May not be suitable if user data is heavily skewed.
+
+2. **Composite Key Example**: `user_id + order_id`
+   - **Pros**: The combination of user ID and order ID is unique and static, ensuring better distribution.
+   - **Cons**: Slightly more complex to implement but can handle a broader range of queries efficiently.
+
+#### Python Script for Testing Shard Distribution
+
+Here’s a Python script to simulate and test the distribution of user data across shards using a static key and a composite key:
+
+```python
+import hashlib
+from collections import defaultdict
+
+def hash_key(key):
+    return int(hashlib.sha256(key.encode()).hexdigest(), 16)
+
+def get_shard_id(key, num_shards):
+    return hash_key(key) % num_shards
+
+def simulate_sharding(keys, num_shards):
+    shard_distribution = defaultdict(int)
+    for key in keys:
+        shard_id = get_shard_id(key, num_shards)
+        shard_distribution[shard_id] += 1
+    return shard_distribution
+
+# Simulate user IDs
+num_users = 100000
+num_shards = 10
+user_ids = [f"user_{i}" for i in range(num_users)]
+
+# Simulate composite keys (user_id + order_id)
+order_ids = [f"user_{i}_order_{j}" for i in range(1000) for j in range(100)]
+
+# Get shard distribution for static key
+user_shard_distribution = simulate_sharding(user_ids, num_shards)
+# Get shard distribution for composite key
+order_shard_distribution = simulate_sharding(order_ids, num_shards)
+
+# Print distribution for user IDs
+print("User ID Shard Distribution:")
+for shard_id, count in user_shard_distribution.items():
+    print(f"Shard {shard_id}: {count} users")
+
+# Print distribution for composite keys
+print("Composite Key Shard Distribution:")
+for shard_id, count in order_shard_distribution.items():
+    print(f"Shard {shard_id}: {count} orders")
+
+# Check for even distribution
+def print_distribution_stats(distribution, key_type):
+    max_count = max(distribution.values())
+    min_count = min(distribution.values())
+    print(f"{key_type} - Max items per shard: {max_count}")
+    print(f"{key_type} - Min items per shard: {min_count}")
+    print(f"{key_type} - Difference: {max_count - min_count}")
+
+print_distribution_stats(user_shard_distribution, "User ID")
+print_distribution_stats(order_shard_distribution, "Composite Key (User ID + Order ID)")
+```
+
+### Conclusion
+
+Choosing the right sharding key involves understanding your data, access patterns, and the specific requirements of your application. A key that is static and provides even distribution is crucial for maintaining performance and scalability. Composite keys can offer additional flexibility and better distribution if chosen carefully. Always test and monitor your sharding strategy to ensure it meets your needs effectively.
+
+### Conclusion
+
+ By carefully selecting shard keys and hash functions, and planning for potential rebalancing, you can effectively manage large-scale distributed databases.
 
 
+
+2) #### Range Based Sharding
+
+Range-based sharding is a method of partitioning data in a database system where data is divided into ranges based on the values of a selected key or attribute. Each range of values is then assigned to a specific shard. This approach is particularly useful when data can be logically partitioned into ranges, such as chronological data or geographical data.
+
+### Key Concepts:
+
+1. **Shard Key**: The attribute or key based on which the data is partitioned.
+2. **Range**: A contiguous interval of values defined by the shard key.
+3. **Shard**: A partition or subset of the database that stores a specific range of data.
+
+### Process of Range-Based Sharding:
+
+1. **Select a Shard Key**: Identify a key or attribute in your dataset that can be used for partitioning. This could be a timestamp for time-series data or a geographic region for location-based data.
+
+2. **Define Ranges**: Determine the ranges of values for the selected shard key. These ranges should partition the data in a logical and evenly distributed manner.
+
+3. **Assign Ranges to Shards**: Assign each range of values to a specific shard. This assignment can be done manually or through an automated process based on predefined rules.
+
+4. **Data Placement**: Insert or migrate data to the appropriate shard based on the value of the shard key. Data falling within a particular range will be stored in the corresponding shard.
+
+5. **Query Routing**: When querying the database, route queries to the appropriate shard based on the range of values being accessed.
+
+### Advantages of Range-Based Sharding:
+
+1. **Logical Partitioning**: Allows for logical organization of data based on meaningful ranges, such as time intervals or geographic regions.
+2. **Simplified Querying**: Queries that involve a specific range of values can be directed to a single shard, reducing the need for cross-shard operations.
+3. **Even Distribution**: Can result in more balanced data distribution if the ranges are carefully chosen to evenly distribute the data.
+
+### Challenges and Considerations:
+
+1. **Range Overlaps**: Care must be taken to ensure that ranges do not overlap, as this can lead to data duplication or loss.
+2. **Range Skewness**: Uneven distribution of data within ranges can lead to hotspots or uneven query performance.
+3. **Range Changes**: Adjusting ranges or adding new ranges may require data migration or reshuffling, which can be complex and resource-intensive.
+
+### Example:
+
+Suppose you have a database of customer orders, and you want to shard the data based on the order creation date. You decide to use monthly intervals for range-based sharding:
+
+- Shard 1: Orders created in January
+- Shard 2: Orders created in February
+- Shard 3: Orders created in March
+- and so on...
+
+Orders created in each month are then stored in the corresponding shard based on the creation date.
+
+### Conclusion:
+
+Range-based sharding offers a logical and intuitive way to partition data in a database system. By carefully selecting shard keys and defining ranges, you can achieve balanced data distribution and optimize query performance. However, it's essential to consider the potential challenges and complexities, particularly around range overlaps and data distribution skewness, when implementing range-based sharding.
+
+
+3) Directory based sharding
